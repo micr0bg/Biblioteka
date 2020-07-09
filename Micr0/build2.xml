@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Micr0" default="build" basedir=".">
+	<description> ClimaCom lib </description>
+
+	<property name="build" location="build" />
+	<property name="build.resources" location="${build}/resources" />
+	<property name="build.bin" location="${build}/bin" />
+	<property name="libs" location="libs" />
+	<property name="src" location="java" />
+
+	<path id="classpath">
+		<fileset dir="${libs}">
+			<include name="*.jar" />
+		</fileset>
+	</path>
+
+	<pathconvert property="manifest.libs" pathsep=" ">
+		<path refid="classpath" />
+		<mapper>
+			<chainedmapper>
+				<flattenmapper />
+				<globmapper from="*.jar" to="libs/*.jar" />
+			</chainedmapper>
+		</mapper>
+	</pathconvert>
+
+	<target name="checkRequirements" description="Check Requirements.">
+		<fail message="Ant 1.8.2 is required. But your version is ${ant.version} and if you are using Eclipse probably is outdated.">
+			<condition>
+				<not>
+					<antversion atleast="1.8.2" />
+				</not>
+			</condition>
+		</fail>
+		<available classname="java.util.stream.Stream" property="JDK8.present" />
+		<fail unless="JDK8.present" message="Java 1.8 is required. But your version is Java ${ant.java.version} and probably JDK is not installed." />
+	</target>
+
+	<target name="init" depends="checkRequirements" description="Create the output directories.">
+		<delete dir="${build.bin}" quiet="true" />
+		<mkdir dir="${build.bin}" />
+	</target>
+
+	<target name="dist" depends="init" description="Export the files to the output directory.">
+		<sync todir="${build.resources}" includeemptydirs="true">
+			<fileset dir="resources" />
+		</sync>
+	</target>
+
+	<target name="compile" depends="dist" description="Compile the source.">
+		<javac srcdir="${src}" classpathref="classpath" destdir="${build.bin}" compiler="modern" debug="true" debuglevel="lines,vars,source" includeantruntime="false" source="1.8" target="1.8" />
+	</target>
+
+	<target name="jar" depends="compile" description="Create the jar files.">
+		<tstamp>
+			<format property="time.stamp" pattern="yyyy-MM-dd HH:mm:ss" />
+		</tstamp>
+
+		<jar destfile="${build}/lab.jar" level="9">
+			<fileset dir="${build.bin}" />
+			<manifest>
+				<attribute name="Built-By" value="${user.name}" />
+				<attribute name="Built-Date" value="${time.stamp}" />
+				<attribute name="Implementation-URL" value="http://www.google.com/" />
+				<attribute name="Class-Path" value="libs/icepdf-core.jar libs/icepdf-extra.jar libs/icepdf-pro.jar libs/icepdf-pro-intl.jar libs/icepdf-viewer.jar libs/mysql-connector-java-8.0.19.jar libs/rt.jar" />
+				<attribute name="Main-Class" value="com.micr0.MainGUI" />
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="build" depends="jar" description="Create the Zip file.">
+	</target>
+</project>
